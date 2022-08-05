@@ -347,57 +347,64 @@ namespace SterlingWrapper
         }
         #endregion
 
-        #region SymbolInfo
-
-        //A class to handle all the symbol data.
-        public class SymbolData
-        {
-            private STIQuote stiQuote = new STIQuote();
-            private string symbol = "";
-            private string market = "";
-            private double lastprice = 0;
-            private double askprice = 0;
-            //Add all you need
-            SymbolData(string symbol, string market = "")
-            {
-                this.symbol = symbol;
-                this.market = market;
-                //Register the event handler
-                stiQuote.RegisterQuote(symbol, market);
-                stiQuote.OnSTIQuoteUpdate += new _ISTIQuoteEvents_OnSTIQuoteUpdateEventHandler(OnSTIQuoteUpdate);
-            }
-            //Event handler function
-            private void OnSTIQuoteUpdate(ref structSTIQuoteUpdate structQuoteUpdate)
-            {
-                this.lastprice = structQuoteUpdate.fLastPrice;
-                this.askprice = structQuoteUpdate.fAskPrice;
-                //You can get any more parameters you need right here.
-            }
-            public double GetLastPrice()
-            {
-                return lastprice;
-            }
-            public double GetAskPrice()
-            {
-                return askprice;
-            }
-            public string GetSymbol()
-            {
-                return symbol;
-            }
-            public string GetMarket()
-            {
-                return market;
-            }
-            //Etc...
-        }
-
-
         
+    }
 
-        #endregion
+    #region SymbolInfo
+
+    //A class to handle all the symbol data.
+    public class SymbolData
+    {
+        private STIQuote stiQuote = new STIQuote();
+        private string symbol = "";
+        private string market = "";
+        private double lastprice = 0;
+        private double askprice = 0;
+        private double openprice = 0;
+        //Add all you need
+        SymbolData(string symbol, string market = "")
+        {
+            this.symbol = symbol;
+            this.market = market;
+            //Register the event handler
+            stiQuote.RegisterQuote(symbol, market);
+            stiQuote.OnSTIQuoteUpdate += new _ISTIQuoteEvents_OnSTIQuoteUpdateEventHandler(OnSTIQuoteUpdate);
+        }
+        //Event handler function
+        private void OnSTIQuoteUpdate(ref structSTIQuoteUpdate structQuoteUpdate)
+        {
+            this.lastprice = structQuoteUpdate.fLastPrice;
+            this.askprice = structQuoteUpdate.fAskPrice;
+            this.openprice = structQuoteUpdate.bOpenPrice;
+            //You can get any more parameters you need right here.
+        }
+        public double GetLastPrice()
+        {
+            return lastprice;
+        }
+        public double GetAskPrice()
+        {
+            return askprice;
+        }
+        public double GetOpenPrice()
+        {
+            return openprice;
+        }
+        public string GetSymbol()
+        {
+            return symbol;
+        }
+        public string GetMarket()
+        {
+            return market;
+        }
+        
+        //Etc...
     }
 
 
+
+
+    #endregion
 
 }
