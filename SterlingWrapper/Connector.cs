@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using SterlingLib;
 using System.IO;
-
+using System.Xml.Serialization;
 namespace SterlingWrapper
 {
     public class Connector
@@ -301,6 +301,7 @@ namespace SterlingWrapper
                 if (smth2[i].bstrSym.ToString() == symbol)
                 {
                     int netPos = (smth2[i].nSharesBot - smth2[i].nSharesSld + smth2[i].nOpeningPosition);
+                    
                     double openPrice = Math.Abs(smth2[i].fPositionCost / netPos);
                     return openPrice;
                 }
@@ -325,6 +326,7 @@ namespace SterlingWrapper
                 {
                     pos_list_return += (smth2[i].bstrSym.ToString() + " " + netPos.ToString() + " " + openPrice.ToString() + " " + smth2[i].fReal.ToString() + " " + smth2[i].nOpeningPosition.ToString() + " " + smth2[i].nSharesSldLong + " " + smth2[i].nSharesSldShort + ";");
                 }
+                Console.WriteLine(smth2[i].bLast);
             }
 
             return pos_list_return;
@@ -361,23 +363,89 @@ namespace SterlingWrapper
         private double lastprice = 0;
         private double askprice = 0;
         private double openprice = 0;
+        private STIEvents m_STIEvents;
+        private STIApp m_STIApp;
         //Add all you need
-        SymbolData(string symbol, string market = "")
+        SymbolData(string symbol, string market = "", string account= "")
         {
             this.symbol = symbol;
             this.market = market;
             //Register the event handler
-            stiQuote.RegisterQuote(symbol, market);
+            m_STIApp = new STIApp();
+            m_STIApp.SetModeXML(true);
+            m_STIEvents = new STIEvents();
+            m_STIEvents.SetOrderEventsAsStructs(true);
+            stiQuote.Symbol = symbol;
+            stiQuote.DefaultAcct = account;
+            stiQuote.Exch = market;
+            stiQuote.DeRegisterAllQuotes();
+            stiQuote.RegisterForAllNews(true);
+            stiQuote.RegisterForAllMdx(true);
+            stiQuote.SetTradesOnly(false);
+            stiQuote.RegisterForScanner(true);
+            stiQuote.OnSTIQuoteRqst+= new _ISTIQuoteEvents_OnSTIQuoteRqstEventHandler(OnSTIQuoteRqst);
+            stiQuote.OnSTIScannerUpdate += StiQuote_OnSTIScannerUpdate;
+            stiQuote.OnSTIQuoteSnap += new _ISTIQuoteEvents_OnSTIQuoteSnapEventHandler(OnSTIQuoteSnap);
+            stiQuote.OnSTIQuoteSnapXML += new _ISTIQuoteEvents_OnSTIQuoteSnapXMLEventHandler(OnSTIQuoteSnapXML);
+            stiQuote.OnSTIQuoteUpdateXML += new _ISTIQuoteEvents_OnSTIQuoteUpdateXMLEventHandler(OnSTIQuoteUpdateXML);
             stiQuote.OnSTIQuoteUpdate += new _ISTIQuoteEvents_OnSTIQuoteUpdateEventHandler(OnSTIQuoteUpdate);
+            stiQuote.RegisterQuote(symbol, market);
+            
+            if (stiQuote.IsQuoteRegistered(symbol, market))
+            {
+                Console.WriteLine(symbol+" is Registered for quote updates.");
+            }
+            else
+            {
+                Console.WriteLine("Error registering: " + symbol + " AT " + market);
+            }
+            
         }
-        //Event handler function
+
+        
+
+        private void StiQuote_OnSTIScannerUpdate(ref structSTIScannerUpdate structScannerUpdate)
+        {
+            Console.WriteLine(structScannerUpdate.bstrSymbol + " scanner event.");
+            this.lastprice = structScannerUpdate.fPrice;
+        }
+
+        //Event handler functions
         private void OnSTIQuoteUpdate(ref structSTIQuoteUpdate structQuoteUpdate)
         {
+            Console.WriteLine(structQuoteUpdate.bstrSymbol + " update event.");
             this.lastprice = structQuoteUpdate.fLastPrice;
             this.askprice = structQuoteUpdate.fAskPrice;
             this.openprice = structQuoteUpdate.bOpenPrice;
             //You can get any more parameters you need right here.
         }
+        private void OnSTIQuoteRqst(ref structSTIQuoteRqst structQuoteUpdate)
+        {
+            
+        }
+        private void OnSTIQuoteSnap(ref structSTIQuoteSnap structQuoteSnap)
+        {
+            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: "+structQuoteSnap.fAskPrice+" Open: "+structQuoteSnap.bOpenPrice);
+            this.lastprice = structQuoteSnap.fLastPrice;
+            this.askprice = structQuoteSnap.fAskPrice;
+            this.openprice = structQuoteSnap.bOpenPrice;
+            //You can get any more parameters you need right here.
+        }
+        private void OnSTIQuoteUpdateXML(ref string strQuote)
+        {
+            XmlSerializer xs = new XmlSerializer(typeof(structSTIQuoteUpdate));
+            structSTIQuoteUpdate structQuoteSnap = (structSTIQuoteUpdate)xs.Deserialize(new StringReader(strQuote));
+            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " xml update event. Price: " + stiQuote.LastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.bOpenPrice);
+            this.lastprice=structQuoteSnap.fLastPrice;
+        }
+        private void OnSTIQuoteSnapXML(ref string strQuote)
+        {
+            XmlSerializer xs = new XmlSerializer(typeof(structSTIQuoteSnap));
+            structSTIQuoteSnap structQuoteSnap = (structSTIQuoteSnap)xs.Deserialize(new StringReader(strQuote));
+            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " xml snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.bOpenPrice);
+            this.lastprice = structQuoteSnap.fLastPrice;
+        }
+
         public double GetLastPrice()
         {
             return lastprice;
