@@ -326,7 +326,6 @@ namespace SterlingWrapper
                 {
                     pos_list_return += (smth2[i].bstrSym.ToString() + " " + netPos.ToString() + " " + openPrice.ToString() + " " + smth2[i].fReal.ToString() + " " + smth2[i].nOpeningPosition.ToString() + " " + smth2[i].nSharesSldLong + " " + smth2[i].nSharesSldShort + ";");
                 }
-                Console.WriteLine(smth2[i].bLast);
             }
 
             return pos_list_return;
@@ -363,7 +362,11 @@ namespace SterlingWrapper
         private double lastprice = 0;
         private double askprice = 0;
         private double openprice = 0;
+        private double closeprice = 0;
         private double bidprice = 0;
+        private int cumVol = 0;
+        private int avgVol = 0;
+
         
         private STIEvents m_STIEvents;
         private STIApp m_STIApp;
@@ -418,8 +421,9 @@ namespace SterlingWrapper
             Console.WriteLine(structQuoteUpdate.bstrSymbol + " update event.");
             this.lastprice = structQuoteUpdate.fLastPrice;
             this.askprice = structQuoteUpdate.fAskPrice;
-            this.openprice = structQuoteUpdate.bOpenPrice;
+            this.openprice = structQuoteUpdate.fOpenPrice;
             this.bidprice = structQuoteUpdate.fBidPrice;
+            this.cumVol = structQuoteUpdate.nCumVolume;
             //You can get any more parameters you need right here.
         }
         private void OnSTIQuoteRqst(ref structSTIQuoteRqst structQuoteUpdate)
@@ -428,11 +432,14 @@ namespace SterlingWrapper
         }
         private void OnSTIQuoteSnap(ref structSTIQuoteSnap structQuoteSnap)
         {
-            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: "+structQuoteSnap.fAskPrice+" Open: "+structQuoteSnap.bOpenPrice);
+            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: "+structQuoteSnap.fAskPrice+" Open: "+structQuoteSnap.fOpenPrice + " Close: " + structQuoteSnap.fClosePrice);
             this.lastprice = structQuoteSnap.fLastPrice;
             this.askprice = structQuoteSnap.fAskPrice;
-            this.openprice = structQuoteSnap.bOpenPrice;
+            this.openprice = structQuoteSnap.fOpenPrice;
+            this.closeprice = structQuoteSnap.fClosePrice;
             this.bidprice = structQuoteSnap.bBidPrice;
+            this.cumVol = structQuoteSnap.nCumVolume;
+            this.avgVol = structQuoteSnap.nAvgVolume;
             //You can get any more parameters you need right here.
         }
         private void OnSTIQuoteUpdateXML(ref string strQuote)
@@ -442,16 +449,22 @@ namespace SterlingWrapper
             Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " xml update event. Price: " + stiQuote.LastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.bOpenPrice);
             this.lastprice=structQuoteSnap.fLastPrice;
             this.askprice = structQuoteSnap.fAskPrice;
+            this.openprice=structQuoteSnap.fOpenPrice;
             this.bidprice = structQuoteSnap.fBidPrice;
+            this.cumVol = structQuoteSnap.nCumVolume;
         }
         private void OnSTIQuoteSnapXML(ref string strQuote)
         {
             XmlSerializer xs = new XmlSerializer(typeof(structSTIQuoteSnap));
             structSTIQuoteSnap structQuoteSnap = (structSTIQuoteSnap)xs.Deserialize(new StringReader(strQuote));
-            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " xml snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.bOpenPrice);
+            Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.fOpenPrice + " Close: " + structQuoteSnap.fClosePrice);
             this.lastprice = structQuoteSnap.fLastPrice;
             this.askprice = structQuoteSnap.fAskPrice;
             this.bidprice = structQuoteSnap.fBidPrice;
+            this.openprice=structQuoteSnap.fOpenPrice;
+            this.closeprice=structQuoteSnap.fClosePrice;
+            this.cumVol = structQuoteSnap.nCumVolume;
+            this.avgVol = structQuoteSnap.nAvgVolume;
         }
 
         public double GetLastPrice()
@@ -470,6 +483,19 @@ namespace SterlingWrapper
         {
             return bidprice;
         }
+        public double GetClosePrice()
+        {
+            return closeprice;
+        }
+        
+        public int GetCumVol()
+        {
+            return cumVol;
+        }
+        public int GetAvgVol()
+        {
+            return avgVol;
+        }
         public string GetSymbol()
         {
             return symbol;
@@ -478,6 +504,7 @@ namespace SterlingWrapper
         {
             return market;
         }
+        
         
         //Etc...
     }
