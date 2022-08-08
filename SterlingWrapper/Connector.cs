@@ -444,6 +444,7 @@ namespace SterlingWrapper
             structSTIQuoteSnap structQuoteSnap = (structSTIQuoteSnap)xs.Deserialize(new StringReader(strQuote));
             Console.WriteLine(structQuoteSnap.bstrSymbol + "  " + structQuoteSnap.bLastPrice + " xml snap event. Price: " + structQuoteSnap.fLastPrice + " Ask: " + structQuoteSnap.fAskPrice + " Open: " + structQuoteSnap.bOpenPrice);
             this.lastprice = structQuoteSnap.fLastPrice;
+            this.askprice = structQuoteSnap.fAskPrice;
         }
 
         public double GetLastPrice()
